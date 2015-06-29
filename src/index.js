@@ -2,8 +2,8 @@ import path from 'path';
 import marked from 'marked';
 import capitalize from 'capitalize';
 import fs from 'fs-extra';
-import yaml from 'js-yaml';
 import moment from 'moment';
+import fm from 'front-matter';
 
 const PERMALINK_REGEXP = /:([a-zA-Z0-9-_]+)/g;
 const extnames = ['.md', '.markdown'];
@@ -15,34 +15,23 @@ function parseMarkdownFiles() {
     if (extnames.indexOf(extname) === -1) {
       return;
     }
-    let fileContentSplitResult = source.fileContent.split('---');
-    let frontMatterContent = '';
-    let markdownContent = '';
-    if (fileContentSplitResult.length === 1) {
-      markdownContent = source.fileContent;
-    } else {
-      if (fileContentSplitResult[0].trim() === '') fileContentSplitResult.shift();
-      frontMatterContent = fileContentSplitResult[0];
-      fileContentSplitResult.shift();
-      markdownContent = fileContentSplitResult.join('---');
-    }
-    source.page = parseFrontMatter.call(this, {
-      frontMatterContent,
+    let fmResult = fm(source.fileContent);
+    let frontMatter = fmResult.attributes;
+    source.page = mergeFrontMatter.call(this, {
+      frontMatter,
       source
     });
-    source.htmlContent = marked(markdownContent);
+    source.htmlContent = marked(fmResult.body);
     source.render = true;
     this.log.verbose('parseMarkdownFiles', JSON.stringify(source, null, 2));
   });
 }
 
-function parseFrontMatter(options) {
+function mergeFrontMatter(options) {
   const {
-    frontMatterContent,
+    frontMatter,
     source
   } = options;
-  let frontMatter = yaml.safeLoad(frontMatterContent);
-  if (!frontMatter) frontMatter = {};
   if (!frontMatter.layout) {
     frontMatter.layout = 'index';
   }
@@ -53,9 +42,7 @@ function parseFrontMatter(options) {
     frontMatter.title = title;
   }
   if (!frontMatter.permalink) {
-    frontMatter.permalink = getPermalink.call(this, {
-      source
-    });
+    frontMatter.permalink = getPermalink.call(this, {source});
   }
   if (!frontMatter.date) {
     const fileStat = fs.statSync(source.filePath);
@@ -73,9 +60,7 @@ function getPermalink(options) {
   const permalinkVariables = {
     path: path.join('/', path.dirname(relative), path.basename(relative, path.extname(relative)))
   };
-  return this.config.permalink.replace(PERMALINK_REGEXP, (arg0, key) => {
-    return permalinkVariables[key];
-  });
+  return this.config.permalink.replace(PERMALINK_REGEXP, (arg0, key) => permalinkVariables[key]);
 }
 
 export default parseMarkdownFiles;
