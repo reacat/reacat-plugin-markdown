@@ -19,7 +19,7 @@ function parseMarkdownFiles() {
     let frontMatterContent = '';
     let markdownContent = '';
     if (fileContentSplitResult.length === 1) {
-      markdownContent = fileContent;
+      markdownContent = source.fileContent;
     } else {
       if (fileContentSplitResult[0].trim() === '') fileContentSplitResult.shift();
       frontMatterContent = fileContentSplitResult[0];
