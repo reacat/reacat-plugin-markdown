@@ -10,14 +10,14 @@ function parseMarkdown() {
     if (!source.page) return;
     var extname = path.extname(filePath).toLowerCase();
     if (extnames.indexOf(extname) === -1) return;
-    var markdownContent = source.page.content;
-    source.page.content = React.createClass({
-      displayName: 'Content',
+    var markdownContent = source.page.Content;
+    var Content = React.createClass({
       render: function() {
         return <article dangerouslySetInnerHTML={{__html: marked(markdownContent)}}/>;
       }
     });
-    this.log.verbose('parseMarkdown', source.page.content);
+    source.page.Content = Content;
+    this.log.verbose('parseMarkdown', source.page.Content);
   }).bind(this));
 }
 
